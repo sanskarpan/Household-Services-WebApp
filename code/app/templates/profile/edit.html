@@ -1,0 +1,107 @@
+<!-- app/templates/profile/edit.html -->
+{% extends "base.html" %}
+
+{% block title %}Edit Profile{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header">
+                <h4 class="mb-0">Edit Profile</h4>
+            </div>
+            <div class="card-body">
+                <form method="POST">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label for="username" class="form-label">Username</label>
+                            <input type="text" class="form-control" id="username" name="username" 
+                                   value="{{ current_user.username }}" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="email" class="form-label">Email</label>
+                            <input type="email" class="form-control" value="{{ current_user.email }}" 
+                                   disabled readonly>
+                        </div>
+                    </div>
+
+                    <div class="row mb-3">
+                        <div class="col-md-8">
+                            <label for="location" class="form-label">Location</label>
+                            <input type="text" class="form-control" id="location" name="location"
+                                   value="{{ current_user.location }}" required>
+                        </div>
+                        <div class="col-md-4">
+                            <label for="pin_code" class="form-label">PIN Code</label>
+                            <input type="text" class="form-control" id="pin_code" name="pin_code"
+                                   value="{{ current_user.pin_code }}" required>
+                        </div>
+                    </div>
+
+                    {% if current_user.role == 'professional' %}
+                    <div class="mb-3">
+                        <label for="experience" class="form-label">Years of Experience</label>
+                        <input type="number" class="form-control" id="experience" name="experience"
+                               value="{{ current_user.experience }}" required>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="description" class="form-label">Professional Description</label>
+                        <textarea class="form-control" id="description" name="description" 
+                                 rows="4" required>{{ current_user.description }}</textarea>
+                    </div>
+                    {% endif %}
+
+                    <hr>
+                    <h5>Change Password (Optional)</h5>
+                    
+                    <div class="mb-3">
+                        <label for="current_password" class="form-label">Current Password</label>
+                        <input type="password" class="form-control" id="current_password" 
+                               name="current_password">
+                    </div>
+
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label for="new_password" class="form-label">New Password</label>
+                            <input type="password" class="form-control" id="new_password" 
+                                   name="new_password">
+                        </div>
+                        <div class="col-md-6">
+                            <label for="confirm_password" class="form-label">Confirm New Password</label>
+                            <input type="password" class="form-control" id="confirm_password" 
+                                   name="confirm_password">
+                        </div>
+                    </div>
+
+                    <div class="d-grid gap-2">
+                        <button type="submit" class="btn btn-primary">Update Profile</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const newPasswordInput = document.getElementById('new_password');
+    const confirmPasswordInput = document.getElementById('confirm_password');
+    const form = document.querySelector('form');
+
+    form.addEventListener('submit', function(e) {
+        if (newPasswordInput.value) {
+            if (newPasswordInput.value !== confirmPasswordInput.value) {
+                e.preventDefault();
+                alert('New passwords do not match!');
+                return false;
+            }
+        }
+    });
+});
+</script>
+{% endblock %}

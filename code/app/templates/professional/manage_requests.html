@@ -1,0 +1,145 @@
+<!-- app/templates/professional/manage_requests.html -->
+{% extends "base.html" %}
+
+{% block title %}Manage Service Requests{% endblock %}
+
+{% block content %}
+<h2>Service Requests</h2>
+
+<div class="mb-4">
+    <div class="btn-group">
+        <a href="{{ url_for('professional.manage_requests', status='available') }}" 
+           class="btn btn-{{ 'primary' if current_status == 'available' else 'outline-primary' }}">
+            Available
+        </a>
+        <a href="{{ url_for('professional.manage_requests', status='assigned') }}"
+           class="btn btn-{{ 'primary' if current_status == 'assigned' else 'outline-primary' }}">
+            Active
+        </a>
+        <a href="{{ url_for('professional.manage_requests', status='completed') }}"
+           class="btn btn-{{ 'primary' if current_status == 'completed' else 'outline-primary' }}">
+            Completed
+        </a>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Service</th>
+                        <th>Customer</th>
+                        <th>Location</th>
+                        <th>Preferred Date</th>
+                        <th>Status</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for request in requests %}
+                    <tr>
+                        <td>{{ request.service.name }}</td>
+                        <td>{{ request.customer.username }}</td>
+                        <td>{{ request.location }} ({{ request.pin_code }})</td>
+                        <td>{{ request.preferred_date.strftime('%Y-%m-%d') if request.preferred_date else 'N/A' }}</td>
+                        <td>
+                            <span class="badge bg-{{ {
+                                'requested': 'warning',
+                                'assigned': 'primary',
+                                'completed': 'success',
+                                'rejected': 'danger'
+                            }[request.status] }}">
+                                {{ request.status.title() }}
+                            </span>
+                        </td>
+                        <td>
+                            {% if request.status == 'requested' %}
+                                <div class="btn-group">
+                                    <form method="POST" action="{{ url_for('professional.accept_request', request_id=request.id) }}"
+                                          class="d-inline">
+                                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                        <button type="submit" class="btn btn-sm btn-success me-2"
+                                                onclick="return confirm('Are you sure you want to accept this request?')">
+                                            Accept
+                                        </button>
+                                    </form>
+                                    <button type="button" class="btn btn-sm btn-danger" 
+                                            onclick="showRejectModal('{{ request.id }}')">
+                                        Reject
+                                    </button>
+                                </div>
+                            {% elif request.status == 'assigned' %}
+                                <div class="btn-group">
+                                    <form method="POST" action="{{ url_for('professional.complete_request', request_id=request.id) }}"
+                                          class="d-inline">
+                                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                        <button type="submit" class="btn btn-sm btn-success me-2"
+                                                onclick="return confirm('Are you sure you want to mark this service as completed?')">
+                                            Complete
+                                        </button>
+                                    </form>
+                                    <button type="button" class="btn btn-sm btn-danger"
+                                            onclick="showRejectModal('{{ request.id }}')">
+                                        Reject
+                                    </button>
+                                </div>
+                            {% elif request.status == 'closed' %}
+                                <span class="badge bg-success">Completed</span>
+                            {% elif request.status == 'rejected' %}
+                                <span class="badge bg-danger">Rejected</span>
+                            {% endif %}
+                        </td>
+
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+
+            {% if not requests %}
+            <div class="text-center py-4">
+                <p class="text-muted">No {{ current_status }} service requests found.</p>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<!-- Reject Modal -->
+<div class="modal fade" id="rejectModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Reject Service Request</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form id="rejectForm" method="POST">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="reason" class="form-label">Reason for Rejection</label>
+                        <textarea class="form-control" id="reason" name="reason" 
+                                 rows="3" required placeholder="Please provide a reason for rejecting this request..."></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-danger">Reject Request</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function showRejectModal(requestId) {
+    const modal = new bootstrap.Modal(document.getElementById('rejectModal'));
+    const form = document.getElementById('rejectForm');
+    form.action = `/professional/request/${requestId}/reject`;
+    modal.show();
+}
+</script>
+{% endblock %}

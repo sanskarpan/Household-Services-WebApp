@@ -1,0 +1,112 @@
+<!-- app/templates/professional/reviews.html -->
+{% extends "base.html" %}
+
+{% block title %}My Reviews{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-4">
+        <div class="card mb-4">
+            <div class="card-body">
+                <h5 class="card-title">Overall Rating</h5>
+                <div class="text-center mb-4">
+                    <h1 class="display-4 text-primary">{{ "%.1f"|format(avg_rating) }} <small class="text-warning">★</small></h1>
+                    <p class="text-muted">Based on {{ total_reviews }} reviews</p>
+                </div>
+
+                <!-- Rating Distribution -->
+                {% for rating in range(5, 0, -1) %}
+                <div class="d-flex align-items-center mb-2">
+                    <div class="text-warning me-2" style="width: 40px;">{{ rating }} ★</div>
+                    <div class="progress flex-grow-1" style="height: 10px;">
+                        {% set percentage = (rating_counts.get(rating, 0) / total_reviews * 100) if total_reviews > 0 else 0 %}
+                        <div class="progress-bar bg-warning" style="width: {{ percentage }}%"></div>
+                    </div>
+                    <div class="ms-2" style="width: 40px;">{{ rating_counts.get(rating, 0) }}</div>
+                </div>
+                {% endfor %}
+
+
+                <!-- Additional Stats -->
+                <div class="mt-4">
+                    <div class="row text-center">
+                        <div class="col-6">
+                            <h5>{{ "%.1f"|format(recent_rating) }}</h5>
+                            <p class="text-muted small">Last 30 days</p>
+                        </div>
+                        <div class="col-6">
+                            <h5>{{ "%.1f"|format(completion_rate) }}%</h5>
+                            <p class="text-muted small">Completion Rate</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-body">
+                <h5 class="card-title mb-4">Review History</h5>
+                
+                {% if reviews.items %}
+                    {% for review in reviews.items %}
+                    <div class="card mb-3">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <h6 class="mb-0">{{ review.service_request.service.name }}</h6>
+                                <div class="text-warning">
+                                    {% for _ in range(review.rating) %}★{% endfor %}
+                                    {% for _ in range(5 - review.rating) %}☆{% endfor %}
+                                </div>
+                            </div>
+                            <p class="review-text mb-2">{{ review.comment }}</p>
+                            <div class="d-flex justify-content-between align-items-center text-muted small">
+                                <span>By {{ review.customer.username }}</span>
+                                <span>{{ review.date_created.strftime('%B %d, %Y') }}</span>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+
+                    <!-- Pagination -->
+                    {% if reviews.pages > 1 %}
+                    <nav aria-label="Review pagination" class="mt-4">
+                        <ul class="pagination justify-content-center">
+                            {% if reviews.has_prev %}
+                            <li class="page-item">
+                                <a class="page-link" 
+                                   href="{{ url_for('professional.view_reviews', page=reviews.prev_num) }}">Previous</a>
+                            </li>
+                            {% endif %}
+
+                            {% for page_num in reviews.iter_pages(left_edge=2, left_current=2, right_current=3, right_edge=2) %}
+                                {% if page_num %}
+                                    <li class="page-item {{ 'active' if page_num == reviews.page else '' }}">
+                                        <a class="page-link" 
+                                           href="{{ url_for('professional.view_reviews', page=page_num) }}">{{ page_num }}</a>
+                                    </li>
+                                {% else %}
+                                    <li class="page-item disabled"><span class="page-link">...</span></li>
+                                {% endif %}
+                            {% endfor %}
+
+                            {% if reviews.has_next %}
+                            <li class="page-item">
+                                <a class="page-link" 
+                                   href="{{ url_for('professional.view_reviews', page=reviews.next_num) }}">Next</a>
+                            </li>
+                            {% endif %}
+                        </ul>
+                    </nav>
+                    {% endif %}
+                {% else %}
+                    <div class="text-center py-4">
+                        <p class="text-muted">No reviews yet.</p>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

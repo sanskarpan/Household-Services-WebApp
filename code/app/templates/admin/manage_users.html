@@ -1,0 +1,315 @@
+<!-- app/templates/admin/manage_users.html -->
+{% extends "base.html" %}
+
+{% block title %}Manage Users{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-md-8">
+        <h2>Manage Users</h2>
+    </div>
+    <div class="col-md-4">
+        <div class="btn-group w-100">
+            <a href="{{ url_for('admin.manage_users', role='professional') }}" 
+               class="btn btn-{{ 'primary' if current_role == 'professional' else 'outline-primary' }}">
+                Professionals
+            </a>
+            <a href="{{ url_for('admin.manage_users', role='customer') }}"
+               class="btn btn-{{ 'primary' if current_role == 'customer' else 'outline-primary' }}">
+                Customers
+            </a>
+        </div>
+    </div>
+</div>
+
+<!-- Status Filter -->
+<div class="row mb-4">
+    <div class="col-md-12">
+        <div class="card">
+            <div class="card-body">
+                <div class="btn-group">
+                    <a href="{{ url_for('admin.manage_users', role=current_role) }}" 
+                       class="btn btn-{{ 'primary' if not current_status else 'outline-primary' }}">
+                        All
+                    </a>
+                    <a href="{{ url_for('admin.manage_users', role=current_role, status='active') }}"
+                       class="btn btn-{{ 'primary' if current_status == 'active' else 'outline-primary' }}">
+                        Active
+                    </a>
+                    {% if current_role == 'professional' %}
+                    <a href="{{ url_for('admin.manage_users', role=current_role, status='pending') }}"
+                       class="btn btn-{{ 'primary' if current_status == 'pending' else 'outline-primary' }}">
+                        Pending Approval
+                    </a>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Username</th>
+                        <th>Email</th>
+                        <th>Date Joined</th>
+                        {% if current_role == 'professional' %}
+                            <th>Service Type</th>
+                            <th>Experience</th>
+                        {% endif %}
+                        <th>Status</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for user in users %}
+                    <tr>
+                        <td>{{ user.username }}</td>
+                        <td>{{ user.email }}</td>
+                        <td>{{ user.date_created.strftime('%Y-%m-%d') }}</td>
+                        {% if current_role == 'professional' %}
+                            <td>{{ user.service_type.name if user.service_type else 'N/A' }}</td>
+                            <td>{{ user.experience }} years</td>
+                        {% endif %}
+                        <td>
+                            <span class="badge {% if user.is_active %}bg-success{% else %}bg-warning{% endif %}">
+                                {% if current_role == 'professional' %}
+                                    {{ 'Active' if user.is_active else 'Pending' }}
+                                {% else %}
+                                    {{ 'Active' if user.is_active else 'Inactive' }}
+                                {% endif %}
+                            </span>
+                        </td>
+                        <td>
+                            <div class="btn-group">
+                                <form method="POST" action="{{ url_for('admin.toggle_user_status', user_id=user.id) }}"
+                                      class="d-inline">
+                                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                    <button type="submit" 
+                                            class="btn btn-sm btn-{{ 'danger' if user.is_active else 'success' }}"
+                                            onclick="return confirm('Are you sure you want to {{ 'deactivate' if user.is_active else 'activate' }} this user?')">
+                                        {{ 'Deactivate' if user.is_active else 'Activate' }}
+                                    </button>
+                                </form>
+                                
+                                {% if current_role == 'professional' and not user.is_active %}
+                                <button type="button" class="btn btn-sm btn-info ms-1"
+                                        onclick="viewDocuments({{ user.id }})">
+                                    View Documents
+                                </button>
+                                {% endif %}
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        {% if not users %}
+        <div class="text-center py-4">
+            <p class="text-muted">No users found.</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Document View Modal -->
+<div class="modal fade" id="documentsModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Professional Documents</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div id="documentsList">
+                    <!-- Documents will be loaded here -->
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+<!-- app/templates/admin/manage_users.html -->
+{% block extra_js %}
+<script>
+let currentProfessionalId = null;
+
+function viewDocuments(userId) {
+    currentProfessionalId = userId;  // Store the current professional ID
+    const modal = new bootstrap.Modal(document.getElementById('documentsModal'));
+    const documentsList = document.getElementById('documentsList');
+    documentsList.innerHTML = '<div class="text-center"><div class="spinner-border text-primary" role="status"></div></div>';
+    modal.show();
+    
+    fetch(`/admin/api/v1/professional/${userId}/documents`)
+        .then(response => {
+            if (!response.ok) throw new Error('Network response was not ok');
+            return response.json();
+        })
+        .then(data => {
+            if (data.documents && data.documents.length > 0) {
+                documentsList.innerHTML = data.documents.map(doc => `
+                    <div class="card mb-3">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <h6 class="card-title mb-0">${doc.document_type}</h6>
+                                <span class="badge ${doc.verified ? 'bg-success' : 'bg-warning'}">
+                                    ${doc.verified ? 'Verified' : 'Pending Verification'}
+                                </span>
+                            </div>
+                            <p class="text-muted small mb-2">Uploaded: ${doc.uploaded_at}</p>
+                            
+                            <!-- Document Preview -->
+                            ${doc.file_name.toLowerCase().match(/\.(jpg|jpeg|png)$/) ? 
+                                `<div class="text-center mb-3">
+                                    <img src="${doc.file_path}" class="img-fluid rounded" 
+                                         style="max-height: 200px;" alt="Document Preview">
+                                </div>` : 
+                                `<div class="text-center mb-3">
+                                    <i class="fas fa-file-pdf fa-3x text-danger"></i>
+                                    <p class="mt-2 mb-0"><small>${doc.file_name}</small></p>
+                                </div>`
+                            }
+                            
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div class="btn-group">
+                                    <a href="${doc.file_path}" class="btn btn-sm btn-primary" 
+                                       target="_blank">View Full Document</a>
+                                    <button type="button" 
+                                            class="btn btn-sm ${doc.verified ? 'btn-warning' : 'btn-success'}"
+                                            onclick="verifyDocument(${doc.id}, ${!doc.verified})">
+                                        ${doc.verified ? 'Revoke Verification' : 'Verify Document'}
+                                    </button>
+                                </div>
+                            </div>
+                            
+                            ${doc.verification_note ? `
+                                <div class="mt-2 p-2 bg-light rounded">
+                                    <small class="text-muted">
+                                        <strong>Verification Note:</strong> ${doc.verification_note}
+                                    </small>
+                                </div>
+                            ` : ''}
+                        </div>
+                    </div>
+                `).join('');
+            } else {
+                documentsList.innerHTML = `
+                    <div class="alert alert-info">
+                        No documents have been uploaded yet.
+                    </div>
+                `;
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            documentsList.innerHTML = `
+                <div class="alert alert-danger">
+                    <h5 class="alert-heading">Error Loading Documents</h5>
+                    <p>There was a problem loading the documents. Please try again later.</p>
+                    <hr>
+                    <p class="mb-0">If the problem persists, please contact technical support.</p>
+                </div>
+            `;
+        });
+}
+
+function verifyDocument(documentId, verified) {
+    const formData = new FormData();
+    formData.append('verified', verified);
+    formData.append('note', verified ? 
+        'Document verified by administrator' : 
+        'Document verification revoked by administrator'
+    );
+    formData.append('csrf_token', '{{ csrf_token() }}');
+
+    const button = event.target;
+    const originalText = button.innerHTML;
+    button.disabled = true;
+    button.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Processing...';
+
+    fetch(`/admin/document/${documentId}/verify`, {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => {
+        if (!response.ok) throw new Error('Network response was not ok');
+        return response.json();
+    })
+    .then(data => {
+        if (data.success) {
+            const toast = document.createElement('div');
+            toast.className = 'toast position-fixed bottom-0 end-0 m-3';
+            toast.setAttribute('role', 'alert');
+            toast.setAttribute('aria-live', 'assertive');
+            toast.setAttribute('aria-atomic', 'true');
+            toast.innerHTML = `
+                <div class="toast-header bg-success text-white">
+                    <strong class="me-auto">Success</strong>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="toast"></button>
+                </div>
+                <div class="toast-body">
+                    Document ${verified ? 'verified' : 'verification revoked'} successfully.
+                </div>
+            `;
+            document.body.appendChild(toast);
+            new bootstrap.Toast(toast).show();
+
+            // Auto-refresh the parent page
+            window.location.reload();
+        } else {
+            throw new Error(data.error || 'Failed to update verification status');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        const toast = document.createElement('div');
+        toast.className = 'toast position-fixed bottom-0 end-0 m-3';
+        toast.setAttribute('role', 'alert');
+        toast.setAttribute('aria-atomic', 'true');
+        toast.innerHTML = `
+            <div class="toast-header bg-danger text-white">
+                <strong class="me-auto">Error</strong>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="toast"></button>
+            </div>
+            <div class="toast-body">
+                Failed to update document verification status. Please try again.
+            </div>
+        `;
+        document.body.appendChild(toast);
+        new bootstrap.Toast(toast).show();
+    })
+    .finally(() => {
+        button.disabled = false;
+        button.innerHTML = originalText;
+        
+        // Close the modal
+        const modal = bootstrap.Modal.getInstance(document.getElementById('documentsModal'));
+        if (modal) {
+            modal.hide();
+        }
+    });
+}
+</script>
+{% endblock %}
+{% endblock %}
+
+<style>
+    .toast {
+        z-index: 1050;
+    }
+    
+    .toast-container {
+        position: fixed;
+        bottom: 20px;
+        right: 20px;
+        z-index: 1050;
+    }
+</style>

@@ -1,0 +1,57 @@
+<!-- app/templates/admin/manage_services.html -->
+{% extends "base.html" %}
+
+{% block title %}Manage Services{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-md-8">
+        <h2>Manage Services</h2>
+    </div>
+    <div class="col-md-4 text-end">
+        <a href="{{ url_for('admin.add_service') }}" class="btn btn-primary">Add New Service</a>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-striped">
+                <thead>
+                    <tr>
+                        <th>Name</th>
+                        <th>Base Price</th>
+                        <th>Time Required</th>
+                        <th>Status</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for service in services %}
+                    <tr>
+                        <td>{{ service.name }}</td>
+                        <td>${{ "%.2f"|format(service.base_price) }}</td>
+                        <td>{{ service.time_required }} minutes</td>
+                        <td>
+                            <span class="badge {% if service.is_active %}bg-success{% else %}bg-danger{% endif %}">
+                                {{ 'Active' if service.is_active else 'Inactive' }}
+                            </span>
+                        </td>
+                        <td>
+                            <a href="{{ url_for('admin.edit_service', id=service.id) }}" 
+                               class="btn btn-sm btn-primary">Edit</a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        {% if not services %}
+        <div class="text-center py-4">
+            <p class="text-muted">No services found.</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

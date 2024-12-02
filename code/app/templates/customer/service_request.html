@@ -1,0 +1,60 @@
+<!-- app/templates/customer/service_request_form.html -->
+{% extends "base.html" %}
+
+{% block title %}Request Service - {{ service.name }}{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header">
+                <h4 class="mb-0">Request Service - {{ service.name }}</h4>
+            </div>
+            <div class="card-body">
+                <form method="POST">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    
+                    <div class="mb-3">
+                        <label for="preferred_date" class="form-label">Preferred Date</label>
+                        <input type="date" class="form-control" id="preferred_date" name="preferred_date"
+                               min="{{ today }}" required>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="location" class="form-label">Service Location</label>
+                        <input type="text" class="form-control" id="location" name="location"
+                               value="{{ current_user.location }}" required>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="pin_code" class="form-label">PIN Code</label>
+                        <input type="text" class="form-control" id="pin_code" name="pin_code"
+                               value="{{ current_user.pin_code }}" required>
+                    </div>
+                    
+                    {% if professionals %}
+                    <div class="mb-3">
+                        <label for="professional_id" class="form-label">Choose Professional (Optional)</label>
+                        <select class="form-control" id="professional_id" name="professional_id">
+                            <option value="">Select a professional...</option>
+                            {% for professional in professionals %}
+                            <option value="{{ professional.id }}">
+                                {{ professional.username }} ({{ professional.experience }} years experience)
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    {% endif %}
+                    
+                    <div class="mb-3">
+                        <label for="remarks" class="form-label">Additional Remarks</label>
+                        <textarea class="form-control" id="remarks" name="remarks" rows="3"></textarea>
+                    </div>
+                    
+                    <button type="submit" class="btn btn-primary">Submit Request</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,163 @@
+
+{% extends "base.html" %}
+
+{% block title %}Customer Dashboard{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-md-8">
+        <h2>My Service Requests</h2>
+    </div>
+    <div class="col-md-4 text-end">
+        <a href="{{ url_for('customer.search_services') }}" class="btn btn-primary">Request New Service</a>
+    </div>
+</div>
+
+<div class="row mb-4">
+    <div class="col-md-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">Active Requests</h5>
+            </div>
+            <div class="card-body">
+                {% if active_requests %}
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>Service</th>
+                            <th>Professional</th>
+                            <th>Date Requested</th>
+                            <th>Preferred Date</th>
+                            <th>Status</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for request in active_requests %}
+                        <tr>
+                            <td>{{ request.service.name }}</td>
+                            <td>{{ request.professional.username if request.professional else 'Unassigned' }}</td>
+                            <td>{{ request.date_of_request.strftime('%Y-%m-%d') if request.date_of_request else 'N/A' }}</td>
+                            <td>{{ request.preferred_date.strftime('%Y-%m-%d') if request.preferred_date else 'N/A' }}</td>
+                            <td>
+                                <span class="badge bg-{{ {
+                                    'requested': 'warning',
+                                    'assigned': 'primary',
+                                    'closed': 'success',
+                                    'cancelled': 'danger',
+                                    'rejected': 'danger'
+                                }[request.status] }}">
+                                    {{ request.status.title() }}
+                                </span>
+                            </td>
+                            <td>
+                                {% if request.status == 'requested' %}
+                                <form method="POST" action="{{ url_for('customer.cancel_service_request', request_id=request.id) }}"
+                                      class="d-inline">
+                                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                    <button type="submit" class="btn btn-sm btn-danger"
+                                            onclick="return confirm('Are you sure you want to cancel this request?')">
+                                        Cancel
+                                    </button>
+                                </form>
+                                {% elif request.status == 'cancelled' %}
+                                <span class="badge bg-danger">Cancelled</span>
+                                
+                                {% elif request.status == 'rejected' %}
+                                <span class="text-muted" data-bs-toggle="tooltip" data-bs-placement="top" 
+                                    title="Rejection reason: {{ request.rejection_reasons[-1].reason if request.rejection_reasons else 'No reason provided' }}">
+                                    <i class="fas fa-info-circle"></i> Rejected by Professional
+                                </span>
+                                {% elif request.status == 'assigned' %}
+                                <div class="d-flex align-items-center gap-2">
+                                    <button class="badge bg-primary">In Progress</button>
+                                    <form method="POST" action="{{ url_for('customer.cancel_service_request', request_id=request.id) }}"
+                                          class="d-inline ms-2">
+                                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                        <button type="submit" class="btn btn-sm btn-danger"
+                                                onclick="return confirm('Are you sure you want to cancel this assigned service? This may incur cancellation charges.')">
+                                            Cancel Service
+                                        </button>
+                                    </form>
+                                </div>                               
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+                {% else %}
+                <p class="text-muted">No active service requests.</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">Past Requests</h5>
+            </div>
+            <div class="card-body">
+                {% if past_requests %}
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>Service</th>
+                            <th>Professional</th>
+                            <th>Completion Date</th>
+                            <th>Status</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for request in past_requests %}
+                        <tr>
+                            <td>{{ request.service.name }}</td>
+                            <td>{{ request.professional.username if request.professional else 'N/A' }}</td>
+                            <td>{{ request.date_of_completion.strftime('%Y-%m-%d') if request.date_of_completion else 'N/A' }}</td>
+                            <td>
+                                <span class="badge bg-{{ 'success' if request.status == 'closed' else 'danger' }}">
+                                    {{ request.status.title() }}
+                                </span>
+                            </td>
+                            <td>
+                                {% if request.status == 'closed' and not request.review %}
+                                    <a href="{{ url_for('customer.review_service', request_id=request.id) }}"
+                                       class="btn btn-sm btn-primary">Write Review</a>
+                                {% elif request.review %}
+                                    <span class="badge bg-secondary">Reviewed</span>
+                                {% elif request.status == 'cancelled' %}
+                                    <span class="badge bg-danger">Cancelled by You</span>
+                                {% elif request.status == 'rejected' %}
+                                    <span class="text-muted" data-bs-toggle="tooltip" data-bs-placement="top" 
+                                          title="Rejection reason: {{ request.rejection_reasons[-1].reason if request.rejection_reasons else 'No reason provided' }}">
+                                        <i class="fas fa-info-circle"></i> Rejected by Professional
+                                    </span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+                {% else %}
+                <p class="text-muted">No past service requests.</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
+    var tooltipList = tooltipTriggerList.map(function(tooltipTriggerEl) {
+        return new bootstrap.Tooltip(tooltipTriggerEl)
+    });
+});
+</script>
+{% endblock %}

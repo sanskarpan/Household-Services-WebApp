@@ -1,0 +1,92 @@
+<!-- app/templates/customer/review_form.html -->
+{% extends "base.html" %}
+
+{% block title %}Review Service{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header">
+                <h4 class="mb-0">Write Review for {{ service_request.service.name }}</h4>
+            </div>
+            <div class="card-body">
+                <div class="mb-4">
+                    <p><strong>Professional:</strong> {{ service_request.professional.username }}</p>
+                    <p><strong>Service Date:</strong> {{ service_request.date_of_completion.strftime('%Y-%m-%d') }}</p>
+                </div>
+
+                <form method="POST">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    
+                    <div class="mb-3">
+                        <label class="form-label">Rating</label>
+                        <div class="rating">
+                            {% for i in range(5, 0, -1) %}
+                            <input type="radio" name="rating" value="{{ i }}" id="star{{ i }}" required>
+                            <label for="star{{ i }}" title="{{ i }} stars">☆</label>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="comment" class="form-label">Your Review</label>
+                        <textarea class="form-control" id="comment" name="comment" rows="4" 
+                                 required minlength="10" maxlength="500"
+                                 placeholder="Write your review here..."></textarea>
+                    </div>
+                    
+                    <div class="d-flex justify-content-between">
+                        <button type="submit" class="btn btn-primary">Submit Review</button>
+                        <a href="{{ url_for('customer.dashboard') }}" class="btn btn-secondary">Cancel</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.rating {
+    display: inline-flex;
+    flex-direction: row-reverse;
+    gap: 0.3rem;
+    font-size: 2rem;
+    justify-content: flex-end;
+}
+
+.rating input {
+    display: none;
+}
+
+.rating label {
+    cursor: pointer;
+    color: #ddd;
+}
+
+.rating input:checked ~ label {
+    color: #ffd700;
+}
+
+.rating label:hover,
+.rating label:hover ~ label {
+    color: #ffd700;
+}
+</style>
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const form = document.querySelector('form');
+    form.addEventListener('submit', function(e) {
+        const rating = form.querySelector('input[name="rating"]:checked');
+        if (!rating) {
+            e.preventDefault();
+            alert('Please select a rating');
+            return false;
+        }
+    });
+});
+</script>
+{% endblock %}
+{% endblock %}

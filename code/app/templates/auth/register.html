@@ -1,0 +1,259 @@
+<!-- app/templates/auth/register.html -->
+{% extends "base.html" %}
+
+{% block title %}Register - {{ role.title() }}{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header">
+                    <h4 class="mb-0">Register as {{ role.title() }}</h4>
+                </div>
+                <div class="card-body">
+                    <form method="POST" enctype="multipart/form-data" class="needs-validation" novalidate>
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label for="username" class="form-label">Username</label>
+                                <input type="text" class="form-control" id="username" name="username" 
+                                       required minlength="3" maxlength="80"
+                                       pattern="^[a-zA-Z0-9_]+$">
+                                <div class="invalid-feedback">
+                                    Username must be 3-80 characters and contain only letters, numbers, and underscores.
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="email" class="form-label">Email</label>
+                                <input type="email" class="form-control" id="email" name="email" 
+                                       required maxlength="120">
+                                <div class="invalid-feedback">
+                                    Please enter a valid email address.
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label for="password" class="form-label">Password</label>
+                                <input type="password" class="form-control" id="password" name="password" 
+                                       required minlength="6">
+                                <div class="form-text">
+                                    Password must contain at least:
+                                    <ul class="mb-0">
+                                        <li>6 characters</li>
+                                        <li>One uppercase letter</li>
+                                        <li>One lowercase letter</li>
+                                        <li>One number</li>
+                                        <li>One special character</li>
+                                    </ul>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="confirm_password" class="form-label">Confirm Password</label>
+                                <input type="password" class="form-control" id="confirm_password" 
+                                       name="confirm_password" required>
+                                <div class="invalid-feedback">
+                                    Passwords must match.
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row mb-3">
+                            <div class="col-md-8">
+                                <label for="location" class="form-label">Location</label>
+                                <input type="text" class="form-control" id="location" name="location" 
+                                       required maxlength="100">
+                            </div>
+                            <div class="col-md-4">
+                                <label for="pin_code" class="form-label">PIN Code</label>
+                                <input type="text" class="form-control" id="pin_code" name="pin_code" 
+                                       required pattern="^\d{5,10}$">
+                                <div class="invalid-feedback">
+                                    Please enter a valid PIN code (5-10 digits).
+                                </div>
+                            </div>
+                        </div>
+
+                    {% if role == 'professional' %}
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label for="service_type" class="form-label">Service Type</label>
+                                <select class="form-control" id="service_type" name="service_type" required>
+                                    <option value="">Select a service...</option>
+                                    {% for service in services %}
+                                    <option value="{{ service.id }}">{{ service.name }} (${{ "%.2f"|format(service.base_price) }})</option>
+                                    {% endfor %}
+                                </select>
+                                <div class="invalid-feedback">
+                                    Please select a service type.
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="experience" class="form-label">Years of Experience</label>
+                                <input type="number" class="form-control" id="experience" name="experience" 
+                                    required min="0" max="50">
+                                <div class="invalid-feedback">
+                                    Please enter valid years of experience (0-50).
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="description" class="form-label">Professional Description</label>
+                            <textarea class="form-control" id="description" name="description" 
+                                    rows="4" required minlength="50" maxlength="500"></textarea>
+                            <div class="form-text">
+                                Please provide a detailed description of your professional experience and expertise 
+                                (50-500 characters).
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="documents" class="form-label">Professional Documents</label>
+                            <input type="file" class="form-control" id="documents" name="documents" 
+                                multiple accept=".pdf,.jpg,.jpeg,.png" required>
+                            <div class="form-text">
+                                Please upload relevant certifications or documentation (PDF, JPG, PNG formats only).
+                                Maximum file size: 5MB per file.
+                            </div>
+                        </div>
+
+                        <div id="document-preview" class="mb-3 row g-2">
+                            <!-- Document previews will be inserted here -->
+                        </div>
+                        {% endif %}
+
+                        <div class="form-check mb-3">
+                            <input class="form-check-input" type="checkbox" id="terms" name="terms" required>
+                            <label class="form-check-label" for="terms">
+                                I agree to the <a href="#" data-bs-toggle="modal" data-bs-target="#termsModal">Terms and Conditions</a>
+                            </label>
+                            <div class="invalid-feedback">
+                                You must agree to the terms and conditions.
+                            </div>
+                        </div>
+
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn btn-primary">Register</button>
+                            <a href="{{ url_for('auth.login') }}" class="btn btn-link">Already have an account? Login</a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Terms and Conditions Modal -->
+<div class="modal fade" id="termsModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Terms and Conditions</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <h6>1. Acceptance of Terms</h6>
+                <p>By registering for an account, you agree to comply with these terms and conditions.</p>
+
+                <h6>2. User Responsibilities</h6>
+                <p>Users are responsible for maintaining the confidentiality of their account credentials and for all activities under their account.</p>
+
+                <h6>3. Service Professional Requirements</h6>
+                <p>Service professionals must:</p>
+                <ul>
+                    <li>Provide accurate information about their qualifications and experience</li>
+                    <li>Maintain professional standards of service</li>
+                    <li>Comply with local regulations and licensing requirements</li>
+                    <li>Carry appropriate insurance coverage</li>
+                </ul>
+
+                <h6>4. Customer Requirements</h6>
+                <p>Customers must:</p>
+                <ul>
+                    <li>Provide accurate service location information</li>
+                    <li>Ensure safe access to service locations</li>
+                    <li>Pay for services as agreed</li>
+                </ul>
+
+                <h6>5. Privacy Policy</h6>
+                <p>We collect and use personal information as described in our Privacy Policy.</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const documentsInput = document.getElementById('documents');
+    const previewContainer = document.getElementById('document-preview');
+    
+    if (documentsInput) {
+        documentsInput.addEventListener('change', function(e) {
+            previewContainer.innerHTML = '';
+            
+            Array.from(this.files).forEach((file, index) => {
+                // Check file size (5MB limit)
+                if (file.size > 5 * 1024 * 1024) {
+                    alert(`File "${file.name}" exceeds 5MB limit`);
+                    return;
+                }
+                
+                const preview = document.createElement('div');
+                preview.className = 'col-md-4';
+                
+                const card = document.createElement('div');
+                card.className = 'card h-100';
+                
+                const cardBody = document.createElement('div');
+                cardBody.className = 'card-body';
+                
+                // Add preview if it's an image
+                if (file.type.startsWith('image/')) {
+                    const img = document.createElement('img');
+                    img.className = 'img-fluid mb-2 rounded';
+                    img.style.maxHeight = '150px';
+                    img.style.objectFit = 'cover';
+                    
+                    const reader = new FileReader();
+                    reader.onload = function(e) {
+                        img.src = e.target.result;
+                    };
+                    reader.readAsDataURL(file);
+                    cardBody.appendChild(img);
+                } else {
+                    // Show icon for PDFs
+                    const icon = document.createElement('div');
+                    icon.className = 'text-center mb-2';
+                    icon.innerHTML = '<i class="fas fa-file-pdf fa-3x text-danger"></i>';
+                    cardBody.appendChild(icon);
+                }
+                
+                const fileName = document.createElement('p');
+                fileName.className = 'card-text small mb-0';
+                fileName.textContent = file.name;
+                
+                const fileSize = document.createElement('p');
+                fileSize.className = 'card-text text-muted small';
+                fileSize.textContent = `${(file.size / 1024 / 1024).toFixed(2)} MB`;
+                
+                cardBody.appendChild(fileName);
+                cardBody.appendChild(fileSize);
+                card.appendChild(cardBody);
+                preview.appendChild(card);
+                previewContainer.appendChild(preview);
+            });
+        });
+    }
+});
+</script>
+{% endblock %}
+
