@@ -1,4 +1,4 @@
-# app/api/routes/auth_routes.py
+
 from flask_restx import Resource
 from ..api.models import login_model, register_model
 from ..api import auth_ns
@@ -11,7 +11,6 @@ class Login(Resource):
     @auth_ns.expect(login_model)
     @auth_ns.doc('user_login')
     def post(self):
-        """User login endpoint"""
         data = auth_ns.payload
         user = User.query.filter_by(email=data['email']).first()
         

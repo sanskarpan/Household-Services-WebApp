@@ -23,18 +23,16 @@ def customer_required(f):
 @login_required
 @customer_required
 def dashboard():
-    # Get active requests (only requested and assigned)
     active_requests = ServiceRequest.query.filter_by(
         customer_id=current_user.id
     ).filter(
-        ServiceRequest.status.in_(['requested', 'assigned'])  # Remove 'rejected' from here
+        ServiceRequest.status.in_(['requested', 'assigned']) 
     ).order_by(ServiceRequest.date_of_request.desc()).all()
     
-    # Get past requests (including rejected)
     past_requests = ServiceRequest.query.filter_by(
         customer_id=current_user.id
     ).filter(
-        ServiceRequest.status.in_(['closed', 'cancelled', 'rejected'])  # Add 'rejected' here
+        ServiceRequest.status.in_(['closed', 'cancelled', 'rejected'])  
     ).order_by(ServiceRequest.date_of_completion.desc()).all()
     
     return render_template('customer/dashboard.html',
@@ -48,10 +46,7 @@ def search_services():
     query = request.args.get('q', '')
     location = request.args.get('location', '')
     pin_code = request.args.get('pin_code', '')
-    
-    # Get all active services
     services = Service.query.filter_by(is_active=True)
-    
     if query:
         services = services.filter(
             db.or_(
@@ -61,8 +56,6 @@ def search_services():
         )
     
     services = services.all()
-    
-    # Get available professionals for each service
     service_professionals = {}
     for service in services:
         professionals = User.query.filter_by(

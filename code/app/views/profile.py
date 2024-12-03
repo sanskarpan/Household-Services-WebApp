@@ -17,8 +17,6 @@ def edit_profile():
             if current_user.role == 'professional':
                 current_user.experience = request.form['experience']
                 current_user.description = request.form['description']
-            
-            # Check if password change is requested
             if request.form.get('new_password'):
                 if current_user.check_password(request.form['current_password']):
                     current_user.set_password(request.form['new_password'])

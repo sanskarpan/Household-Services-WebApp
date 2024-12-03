@@ -1,11 +1,9 @@
-# run.py
+
 from app import create_app, db
 from app.models.user import User
 from app.models.service import Service, ServiceRequest, Review
-from app.models.security import ActivityLog, FailedLoginAttempt, BlockedIP, APIKey
 from flask_migrate import Migrate
 import click
-from flask.cli import with_appcontext
 
 app = create_app()
 migrate = Migrate(app, db)
@@ -36,7 +34,7 @@ def create_admin(email, username, password):
     """Create an admin user"""
     with app.app_context():
         if User.query.filter_by(email=email).first():
-            click.echo('Email already registered')
+            click.echo('This Email has been already registered')
             return
         
         if User.query.filter_by(username=username).first():
@@ -107,3 +105,4 @@ def create_sample_data():
 
 if __name__ == '__main__':
     app.run(debug=True)
+

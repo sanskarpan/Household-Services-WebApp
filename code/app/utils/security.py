@@ -36,14 +36,10 @@ def rate_limit(max_requests, window_seconds=60):
         def wrapped(*args, **kwargs):
             now = time.time()
             client_ip = request.remote_addr
-            
-            # Clean old entries
             requests_copy = requests.copy()
             for ip, data in requests_copy.items():
                 if now - data['start_time'] > window_seconds:
                     del requests[ip]
-            
-            # Check current IP
             if client_ip not in requests:
                 requests[client_ip] = {
                     'count': 1,
@@ -59,19 +55,18 @@ def rate_limit(max_requests, window_seconds=60):
                     requests[client_ip]['count'] += 1
                     
                     if requests[client_ip]['count'] > max_requests:
-                        abort(429)  # Too Many Requests
-            
+                        abort(429)  
             return f(*args, **kwargs)
         return wrapped
     return decorator
 
 def check_content_type(content_type):
-    """Decorator to check request content type"""
+
     def decorator(f):
         @wraps(f)
         def wrapped(*args, **kwargs):
             if request.content_type != content_type:
-                abort(415)  # Unsupported Media Type
+                abort(415)  
             return f(*args, **kwargs)
         return wrapped
     return decorator
@@ -95,9 +90,8 @@ def verify_request_signature(f):
         
         if not hmac.compare_digest(signature, expected_signature):
             abort(401)
-            
-        # Check timestamp to prevent replay attacks
-        if abs(int(timestamp) - int(time.time())) > 300:  # 5 minutes window
+
+        if abs(int(timestamp) - int(time.time())) > 300:  
             abort(401)
             
         return f(*args, **kwargs)
@@ -118,7 +112,6 @@ class RoleRequired:
             return f(*args, **kwargs)
         return wrapped
 
-# CSRF Protection
 class CSRFProtection:
     def __init__(self, app):
         self.app = app
@@ -133,13 +126,11 @@ class CSRFProtection:
         if not token or token != session.get('csrf_token'):
             abort(403)
 
-# SQL Injection Prevention
 def sanitize_sql_input(value):
     if isinstance(value, str):
         return value.replace("'", "''")
     return value
 
-# Audit logging
 class AuditLogger:
     def __init__(self, app):
         self.app = app
@@ -159,21 +150,17 @@ class AuditLogger:
         except Exception as e:
             current_app.logger.error(f"Failed to log activity: {str(e)}")
 
-# Login attempt tracking
 class LoginAttemptTracker:
     MAX_ATTEMPTS = 5
-    LOCKOUT_TIME = 900  # 15 minutes in seconds
+    LOCKOUT_TIME = 900 
     
     @classmethod
     def record_failed_attempt(cls, email, ip_address):
         now = datetime.utcnow()
         cutoff = now - timedelta(seconds=cls.LOCKOUT_TIME)
         
-        # Clean up old attempts
         FailedLoginAttempt.query.filter(FailedLoginAttempt.timestamp < cutoff).delete()
         db.session.commit()
-        
-        # Record new attempt
         attempt = FailedLoginAttempt(email=email, ip_address=ip_address)
         db.session.add(attempt)
         db.session.commit()

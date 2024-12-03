@@ -7,5 +7,5 @@ class Config:
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     WTF_CSRF_ENABLED = True
     UPLOAD_FOLDER = os.path.join(basedir, '..', 'instance', 'uploads')
-    MAX_CONTENT_LENGTH = 16 * 1024 * 1024  # 16MB max file size
+    MAX_CONTENT_LENGTH = 16 * 1024 * 1024  
     os.makedirs(UPLOAD_FOLDER, exist_ok=True)

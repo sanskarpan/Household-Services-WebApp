@@ -1,4 +1,4 @@
-<!-- app/templates/admin/service_form.html -->
+
 {% extends "base.html" %}
 
 {% block title %}{{ 'Edit' if service else 'Add' }} Service{% endblock %}
@@ -12,7 +12,6 @@
             </div>
             <div class="card-body">
                 <form method="POST">
-                    <!-- Add CSRF Token -->
                     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                     
                     <div class="mb-3">

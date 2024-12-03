@@ -1,4 +1,4 @@
-# app/api/routes.py
+
 from flask import Blueprint, jsonify, request, current_app
 from flask_login import current_user, login_required
 from ..models.service import Service, ServiceRequest, Review
@@ -28,7 +28,6 @@ def token_required(f):
         return f(current_user, *args, **kwargs)
     return decorated
 
-# Authentication endpoints
 @bp.route('/login', methods=['POST'])
 def login():
     data = request.get_json()
@@ -52,7 +51,6 @@ def login():
     
     return jsonify({'message': 'Invalid credentials'}), 401
 
-# Service endpoints
 @bp.route('/services', methods=['GET'])
 def get_services():
     services = Service.query.filter_by(is_active=True).all()
@@ -91,7 +89,6 @@ def get_service(service_id):
         }
     })
 
-# Service Request endpoints
 @bp.route('/service-requests', methods=['GET'])
 @token_required
 def get_service_requests(current_user):
@@ -150,7 +147,6 @@ def create_service_request(current_user):
         db.session.rollback()
         return jsonify({'message': str(e)}), 400
 
-# Review endpoints
 @bp.route('/reviews/<int:professional_id>', methods=['GET'])
 def get_reviews(professional_id):
     reviews = Review.query.filter_by(professional_id=professional_id).all()
@@ -165,9 +161,9 @@ def get_reviews(professional_id):
         } for review in reviews]
     })
 
-# Helper function to calculate professional rating
 def calculate_rating(professional_id):
     reviews = Review.query.filter_by(professional_id=professional_id).all()
     if not reviews:
         return 0
     return sum(review.rating for review in reviews) / len(reviews)
+

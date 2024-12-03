@@ -7,7 +7,7 @@ class ProfessionalDocument(db.Model):
     
     id = db.Column(db.Integer, primary_key=True)
     professional_id = db.Column(db.Integer, db.ForeignKey('users.id'))
-    document_type = db.Column(db.String(50))  # ID Proof, Certification, etc.
+    document_type = db.Column(db.String(50)) 
     file_name = db.Column(db.String(255))
     file_path = db.Column(db.String(255))
     uploaded_at = db.Column(db.DateTime, default=datetime.utcnow)

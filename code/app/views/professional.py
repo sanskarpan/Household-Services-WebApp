@@ -27,7 +27,6 @@ def professional_required(f):
 @login_required
 @professional_required
 def dashboard():
-    # Get statistics
     total_requests = ServiceRequest.query.filter_by(professional_id=current_user.id).count()
     active_requests = ServiceRequest.query.filter_by(
         professional_id=current_user.id,
@@ -38,11 +37,8 @@ def dashboard():
         status='closed'
     ).count()
     
-    # Calculate average rating
     reviews = Review.query.filter_by(professional_id=current_user.id).all()
     avg_rating = sum(review.rating for review in reviews) / len(reviews) if reviews else 0
-    
-    # Get recent reviews
     recent_reviews = Review.query.filter_by(professional_id=current_user.id)\
         .order_by(Review.date_created.desc()).limit(5).all()
     
@@ -60,22 +56,19 @@ def manage_requests():
     status = request.args.get('status', 'available')
     
     if status == 'available':
-        # Show requests that match professional's service type and are not yet assigned
         requests = ServiceRequest.query.filter_by(
             status='requested',
             service_id=current_user.service_type_id
         ).order_by(ServiceRequest.date_of_request.desc()).all()
     elif status == 'assigned':
-        # Show professional's assigned requests
         requests = ServiceRequest.query.filter_by(
             professional_id=current_user.id,
             status='assigned'
         ).order_by(ServiceRequest.date_of_request.desc()).all()
     elif status == 'completed':
-        # Show professional's completed requests
         requests = ServiceRequest.query.filter_by(
             professional_id=current_user.id,
-            status='closed'  # Change 'completed' to 'closed' to match the status we set
+            status='closed' 
         ).order_by(ServiceRequest.date_of_request.desc()).all()
     
     return render_template('professional/manage_requests.html',
@@ -122,7 +115,7 @@ def complete_request(request_id):
         return redirect(url_for('professional.manage_requests'))
     
     try:
-        service_request.status = 'closed'  # Using 'closed' instead of 'completed'
+        service_request.status = 'closed'  
         service_request.date_of_completion = datetime.utcnow()
         db.session.commit()
         flash('Service request marked as completed!', 'success')
@@ -138,23 +131,18 @@ def complete_request(request_id):
 def reject_request(request_id):
     service_request = ServiceRequest.query.get_or_404(request_id)
     
-    # Allow rejection for both 'requested' and 'assigned' status
     if service_request.status not in ['requested', 'assigned']:
         flash('This request is no longer available for rejection.', 'error')
         return redirect(url_for('professional.manage_requests'))
     
     try:
         reason = request.form.get('reason', 'No reason provided')
-        
-        # Create rejection record
         rejection = RejectionReason(
             service_request_id=request_id,
             professional_id=current_user.id,
             reason=reason
         )
         db.session.add(rejection)
-        
-        # Update request status
         service_request.status = 'rejected'
         db.session.commit()
         
@@ -170,13 +158,11 @@ def reject_request(request_id):
 @professional_required
 def view_reviews():
     page = request.args.get('page', 1, type=int)
-    per_page = 10  # Number of reviews per page
+    per_page = 10 
     
     reviews = Review.query.filter_by(professional_id=current_user.id)\
         .order_by(Review.date_created.desc())\
         .paginate(page=page, per_page=per_page, error_out=False)
-    
-    # Calculate review statistics
     total_reviews = Review.query.filter_by(professional_id=current_user.id).count()
     if total_reviews > 0:
         avg_rating = db.session.query(db.func.avg(Review.rating))\
@@ -188,14 +174,10 @@ def view_reviews():
     else:
         avg_rating = 0
         rating_counts = {i: 0 for i in range(1, 6)}
-    
-    # Calculate recent rating (last 30 days)
     thirty_days_ago = datetime.utcnow() - timedelta(days=30)
     recent_reviews = Review.query.filter_by(professional_id=current_user.id)\
         .filter(Review.date_created >= thirty_days_ago).all()
     recent_rating = sum(r.rating for r in recent_reviews) / len(recent_reviews) if recent_reviews else 0
-    
-    # Calculate completion rate
     total_requests = ServiceRequest.query.filter_by(professional_id=current_user.id).count()
     completed_requests = ServiceRequest.query.filter_by(
         professional_id=current_user.id,

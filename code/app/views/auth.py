@@ -32,8 +32,6 @@ def login():
         if user is None or not user.check_password(form.password.data):
             flash('Invalid email or password', 'error')
             return redirect(url_for('auth.login'))
-        
-        # For professionals, check if they're approved
         if user.role == 'professional' and not user.is_active:
             flash('Your account is pending approval or has been deactivated. Please contact admin.', 'warning')
             return redirect(url_for('auth.login'))
@@ -64,8 +62,6 @@ def register(role):
     
     if role not in ['customer', 'professional']:
         return redirect(url_for('main.index'))
-    
-    # Get all services for professional registration
     services = []
     if role == 'professional':
         services = Service.query.filter_by(is_active=True).all()
@@ -84,31 +80,24 @@ def register(role):
             user.service_type_id = request.form.get('service_type')
             user.experience = request.form.get('experience')
             user.description = request.form.get('description')
-            user.is_active = False  # Requires admin approval
+            user.is_active = False  
             
         try:
             db.session.add(user)
             db.session.commit()
-            
-            # Handle document upload for professionals
             if role == 'professional' and 'documents' in request.files:
                 files = request.files.getlist('documents')
                 for file in files:
                     if file and allowed_file(file.filename):
                         filename = secure_filename(file.filename)
-                        # Create unique filename with timestamp
                         base, ext = os.path.splitext(filename)
                         unique_filename = f"{base}_{user.id}_{int(datetime.utcnow().timestamp())}{ext}"
-                        
-                        # Create upload directory if it doesn't exist
                         upload_dir = os.path.join(current_app.config['UPLOAD_FOLDER'], str(user.id))
                         os.makedirs(upload_dir, exist_ok=True)
                         
-                        # Save file
                         file_path = os.path.join(upload_dir, unique_filename)
                         file.save(file_path)
                         
-                        # Create document record
                         document = ProfessionalDocument(
                             professional_id=user.id,
                             document_type='Identity/Certification',

@@ -11,7 +11,7 @@ class User(UserMixin, db.Model):
     email = db.Column(db.String(120), unique=True, nullable=False)
     username = db.Column(db.String(80), unique=True, nullable=False)
     password_hash = db.Column(db.String(128))
-    role = db.Column(db.String(20), nullable=False)  # 'admin', 'professional', 'customer'
+    role = db.Column(db.String(20), nullable=False)  
     date_created = db.Column(db.DateTime, default=datetime.utcnow)
     is_active = db.Column(db.Boolean, default=True)
     is_blocked = db.Column(db.Boolean, default=False)
@@ -20,14 +20,12 @@ class User(UserMixin, db.Model):
     warning_count = db.Column(db.Integer, default=0)
     last_warning_at = db.Column(db.DateTime)
     
-    # Role-specific fields
-    description = db.Column(db.Text)  # For professionals
-    service_type_id = db.Column(db.Integer, db.ForeignKey('services.id'))  # For professionals
-    experience = db.Column(db.Integer)  # For professionals
+    description = db.Column(db.Text)  
+    service_type_id = db.Column(db.Integer, db.ForeignKey('services.id')) 
+    experience = db.Column(db.Integer)  
     location = db.Column(db.String(100))
     pin_code = db.Column(db.String(10))
     
-    # Relationships
     service_requests_customer = db.relationship('ServiceRequest', 
                                               backref='customer',
                                               foreign_keys='ServiceRequest.customer_id')

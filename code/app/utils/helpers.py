@@ -1,4 +1,4 @@
-# app/utils/helpers.py
+
 from flask import current_app, make_response
 import os
 from werkzeug.utils import secure_filename
@@ -19,10 +19,8 @@ def allowed_file(filename, allowed_extensions):
            filename.rsplit('.', 1)[1].lower() in allowed_extensions
 
 def save_file(file, folder):
-    """Save uploaded file with secure filename"""
     if file and allowed_file(file.filename, {'pdf', 'png', 'jpg', 'jpeg'}):
         filename = secure_filename(file.filename)
-        # Add timestamp and UUID to filename to ensure uniqueness
         name, ext = os.path.splitext(filename)
         unique_filename = f"{name}_{datetime.now().strftime('%Y%m%d_%H%M%S')}_{str(uuid.uuid4())[:8]}{ext}"
         file_path = os.path.join(current_app.config['UPLOAD_FOLDER'], folder, unique_filename)
@@ -32,19 +30,15 @@ def save_file(file, folder):
     return None
 
 def format_phone_number(phone):
-    """Format phone number consistently"""
-    # Remove all non-numeric characters
     phone = re.sub(r'\D', '', phone)
     if len(phone) == 10:
         return f"({phone[:3]}) {phone[3:6]}-{phone[6:]}"
     return phone
 
 def format_currency(amount):
-    """Format currency with proper symbols and decimals"""
     return f"${amount:,.2f}"
 
 def calculate_service_metrics(professional):
-    """Calculate various metrics for a professional"""
     total_services = len(professional.service_requests_professional)
     completed_services = sum(1 for req in professional.service_requests_professional 
                            if req.status == 'closed')
@@ -65,7 +59,6 @@ def calculate_service_metrics(professional):
     }
 
 def get_date_range_metrics(start_date, end_date, professional):
-    """Get metrics for a specific date range"""
     requests = [req for req in professional.service_requests_professional 
                if start_date <= req.date_of_request <= end_date]
     
@@ -86,7 +79,6 @@ def get_date_range_metrics(start_date, end_date, professional):
     }
 
 def generate_dashboard_data(user):
-    """Generate relevant dashboard data based on user role"""
     if user.role == 'professional':
         return {
             'metrics': calculate_service_metrics(user),
@@ -110,7 +102,6 @@ def generate_dashboard_data(user):
     return {}
 
 def validate_pin_code(pin_code):
-    """Validate PIN code format"""
     return bool(re.match(r'^\d{5,10}$', pin_code))
 
 def validate_password_strength(password):
@@ -140,14 +131,6 @@ def validate_password_strength(password):
         
     return True, "Password meets requirements"
 
-def send_notification(user, subject, message, notification_type='email'):
-    """Send notification to user via email or SMS"""
-    if notification_type == 'email':
-        # Add your email sending logic here
-        pass
-    elif notification_type == 'sms':
-        # Add your SMS sending logic here
-        pass
 
 def generate_service_report(professional, start_date, end_date):
     """Generate service report for a professional"""
@@ -204,17 +187,13 @@ def format_duration(minutes):
         return f"{hours} hour{'s' if hours != 1 else ''}"
     return f"{hours} hour{'s' if hours != 1 else ''} {remaining_minutes} minutes"
 
-# app/utils/helpers.py (adding report generation functions)
-
 def generate_csv_report(data, report_type):
     """Generate CSV report based on data type"""
     output = io.StringIO()
     writer = csv.writer(output)
     
     if report_type == 'services':
-        # Write header
         writer.writerow(['ID', 'Name', 'Base Price', 'Time Required', 'Status', 'Date Created'])
-        # Write data
         for service in data:
             writer.writerow([
                 service.id,
@@ -226,9 +205,7 @@ def generate_csv_report(data, report_type):
             ])
     
     elif report_type == 'professionals':
-        # Write header
         writer.writerow(['ID', 'Username', 'Email', 'Service Type', 'Experience', 'Status', 'Join Date'])
-        # Write data
         for user in data:
             writer.writerow([
                 user.id,
@@ -241,12 +218,10 @@ def generate_csv_report(data, report_type):
             ])
     
     elif report_type == 'requests':
-        # Write header
         writer.writerow([
             'ID', 'Service', 'Customer', 'Professional', 'Status',
             'Request Date', 'Completion Date', 'Amount'
         ])
-        # Write data
         for request in data:
             writer.writerow([
                 request.id,
@@ -259,7 +234,6 @@ def generate_csv_report(data, report_type):
                 request.service.base_price
             ])
 
-    # Create response
     output.seek(0)
     response = make_response(output.getvalue())
     response.headers['Content-Type'] = 'text/csv'
@@ -268,19 +242,16 @@ def generate_csv_report(data, report_type):
     return response
 
 def generate_pdf_report(data, report_type):
-    """Generate PDF report based on data type"""
     buffer = io.BytesIO()
     doc = SimpleDocTemplate(buffer, pagesize=letter)
     elements = []
     styles = getSampleStyleSheet()
     
-    # Add title
     title = Paragraph(f"{report_type.title()} Report", styles['Title'])
     elements.append(title)
     elements.append(Spacer(1, 20))
     
     if report_type == 'services':
-        # Define table data
         table_data = [['ID', 'Name', 'Base Price', 'Time Required', 'Status']]
         for service in data:
             table_data.append([
@@ -292,7 +263,6 @@ def generate_pdf_report(data, report_type):
             ])
     
     elif report_type == 'professionals':
-        # Define table data
         table_data = [['ID', 'Username', 'Service Type', 'Experience', 'Status']]
         for user in data:
             table_data.append([
@@ -304,7 +274,6 @@ def generate_pdf_report(data, report_type):
             ])
     
     elif report_type == 'requests':
-        # Define table data
         table_data = [['ID', 'Service', 'Customer', 'Status', 'Amount']]
         for request in data:
             table_data.append([
@@ -315,7 +284,6 @@ def generate_pdf_report(data, report_type):
                 f"${request.service.base_price:.2f}"
             ])
     
-    # Create table
     table = Table(table_data)
     table.setStyle(TableStyle([
         ('BACKGROUND', (0, 0), (-1, 0), colors.grey),
@@ -333,19 +301,14 @@ def generate_pdf_report(data, report_type):
     ]))
     elements.append(table)
     
-    # Add generation timestamp
     elements.append(Spacer(1, 20))
     timestamp = Paragraph(
         f"Generated on: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}",
         styles['Normal']
     )
     elements.append(timestamp)
-    
-    # Build PDF
     doc.build(elements)
     buffer.seek(0)
-    
-    # Create response
     response = make_response(buffer.getvalue())
     response.headers['Content-Type'] = 'application/pdf'
     response.headers['Content-Disposition'] = f'attachment; filename={report_type}_report_{datetime.now().strftime("%Y%m%d")}.pdf'

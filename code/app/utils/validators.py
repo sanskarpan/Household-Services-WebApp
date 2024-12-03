@@ -1,4 +1,4 @@
-# app/utils/validators.py
+
 from wtforms import Form, StringField, PasswordField, TextAreaField, SelectField, FloatField, IntegerField
 from wtforms.validators import DataRequired, Email, Length, NumberRange, ValidationError
 import re

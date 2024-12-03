@@ -1,8 +1,6 @@
-# app/api/models.py
 from flask_restx import fields
 from . import api
 
-# Auth Models
 login_model = api.model('Login', {
     'email': fields.String(required=True, description='User email'),
     'password': fields.String(required=True, description='User password')
@@ -17,7 +15,6 @@ register_model = api.model('Register', {
     'pin_code': fields.String(required=True, description='PIN code')
 })
 
-# Service Models
 service_model = api.model('Service', {
     'id': fields.Integer(description='Service ID'),
     'name': fields.String(required=True, description='Service name'),
@@ -26,7 +23,6 @@ service_model = api.model('Service', {
     'description': fields.String(required=True, description='Service description')
 })
 
-# Service Request Models
 service_request_model = api.model('ServiceRequest', {
     'service_id': fields.Integer(required=True, description='Service ID'),
     'preferred_date': fields.DateTime(required=True, description='Preferred service date'),

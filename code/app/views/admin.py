@@ -1,4 +1,4 @@
-# app/views/admin.py
+
 from flask import Blueprint, render_template, request, redirect, url_for, flash, jsonify, abort, send_file, current_app
 from flask_login import login_required, current_user
 from ..models.service import Service, ServiceRequest
@@ -272,18 +272,14 @@ def approve_professional(user_id):
 @login_required
 @admin_required
 def analytics():
-    # Get date range for analytics
     end_date = datetime.now()
     start_date = end_date - timedelta(days=30)
-    
-    # Service statistics
     service_stats = db.session.query(
         Service.name,
         func.count(ServiceRequest.id).label('request_count'),
         func.avg(Service.base_price).label('avg_price')
     ).outerjoin(ServiceRequest).group_by(Service.id).all()
     
-    # Professional statistics
     pro_stats = db.session.query(
         User,
         func.count(ServiceRequest.id).label('request_count'),
@@ -293,7 +289,6 @@ def analytics():
     .outerjoin(Review, ServiceRequest.id == Review.service_request_id)\
     .group_by(User.id).all()
     
-    # Revenue over time
     revenue_data = db.session.query(
         func.date(ServiceRequest.date_of_completion).label('date'),
         func.sum(Service.base_price).label('revenue')
@@ -340,10 +335,8 @@ def get_professional_documents(user_id):
         documents = ProfessionalDocument.query.filter_by(professional_id=user_id).all()
         
         if not documents:
-            # Check if the user has any documents stored in the filesystem
             upload_dir = os.path.join(current_app.config['UPLOAD_FOLDER'], str(user_id))
             if os.path.exists(upload_dir):
-                # If documents exist in filesystem but not in database, create records
                 for filename in os.listdir(upload_dir):
                     if allowed_file(filename):
                         file_path = os.path.join(upload_dir, filename)
@@ -378,7 +371,6 @@ def get_professional_documents(user_id):
 @admin_required
 def view_document(document_id):
     document = ProfessionalDocument.query.get_or_404(document_id)
-    # Add security check to ensure admin has permission
     if not current_user.role == 'admin':
         abort(403)
     try:
@@ -398,17 +390,12 @@ def verify_document(document_id):
     document = ProfessionalDocument.query.get_or_404(document_id)
     
     try:
-        # Get the verification status from form data
         verified = request.form.get('verified') == 'true'
         note = request.form.get('note', '')
-        
-        # Update document verification status
         document.verified = verified
         document.verification_note = note
         document.verified_at = datetime.utcnow() if verified else None
         document.verified_by = current_user.id if verified else None
-        
-        # If all documents are verified and professional is not active, activate them
         if verified:
             professional = User.query.get(document.professional_id)
             if professional and not professional.is_active:
@@ -455,7 +442,7 @@ def warn_user(user_id):
     
     user.warning_count += 1
     user.last_warning_at = datetime.utcnow()
-    if user.warning_count >= 3:  # Auto-block after 3 warnings
+    if user.warning_count >= 3:  
         user.is_blocked = True
         user.block_reason = f"Automatically blocked after {user.warning_count} warnings"
         user.blocked_at = datetime.utcnow()

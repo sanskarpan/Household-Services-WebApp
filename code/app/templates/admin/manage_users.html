@@ -1,4 +1,4 @@
-<!-- app/templates/admin/manage_users.html -->
+
 {% extends "base.html" %}
 
 {% block title %}Manage Users{% endblock %}
@@ -136,13 +136,12 @@
 </div>
 
 
-<!-- app/templates/admin/manage_users.html -->
 {% block extra_js %}
 <script>
 let currentProfessionalId = null;
 
 function viewDocuments(userId) {
-    currentProfessionalId = userId;  // Store the current professional ID
+    currentProfessionalId = userId;  
     const modal = new bootstrap.Modal(document.getElementById('documentsModal'));
     const documentsList = document.getElementById('documentsList');
     documentsList.innerHTML = '<div class="text-center"><div class="spinner-border text-primary" role="status"></div></div>';
@@ -262,7 +261,7 @@ function verifyDocument(documentId, verified) {
             document.body.appendChild(toast);
             new bootstrap.Toast(toast).show();
 
-            // Auto-refresh the parent page
+        
             window.location.reload();
         } else {
             throw new Error(data.error || 'Failed to update verification status');

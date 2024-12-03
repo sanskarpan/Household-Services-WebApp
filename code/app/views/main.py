@@ -2,7 +2,6 @@
 from flask import Blueprint, render_template, jsonify
 from ..models.service import Service, ServiceRequest, Review
 from ..models.user import User
-from flask_login import current_user
 from sqlalchemy import func
 from .. import db 
 
@@ -10,21 +9,18 @@ bp = Blueprint('main', __name__)
 
 @bp.route('/')
 def index():
-    # Get some statistics for the landing page
     total_services = Service.query.count()
     total_professionals = User.query.filter_by(role='professional', is_active=True).count()
     total_customers = User.query.filter_by(role='customer').count()
     completed_services = ServiceRequest.query.filter_by(status='closed').count()
-    
-    # Get featured services (those with most requests)
     featured_services = db.session.query(
         Service,
-        func.count(ServiceRequest.id).label('request_count')
-    ).join(ServiceRequest).group_by(Service.id)\
-    .order_by(func.count(ServiceRequest.id).desc())\
+        db.func.count(ServiceRequest.id).label('request_count')
+    ).join(ServiceRequest, Service.id == ServiceRequest.service_id)\
+    .group_by(Service.id)\
+    .order_by(db.func.count(ServiceRequest.id).desc())\
     .limit(6).all()
     
-    # Get top rated professionals
     top_professionals = db.session.query(
         User,
         func.avg(Review.rating).label('avg_rating'),

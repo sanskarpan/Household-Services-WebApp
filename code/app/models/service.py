@@ -1,4 +1,4 @@
-# app/models/service.py
+
 from .. import db
 from datetime import datetime
 
@@ -8,12 +8,11 @@ class Service(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(100), nullable=False)
     base_price = db.Column(db.Float, nullable=False)
-    time_required = db.Column(db.Integer)  # in minutes
+    time_required = db.Column(db.Integer)  
     description = db.Column(db.Text)
     date_created = db.Column(db.DateTime, default=datetime.utcnow)
     is_active = db.Column(db.Boolean, default=True)
     
-    # Relationships
     professionals = db.relationship('User', backref='service_type')
     service_requests = db.relationship('ServiceRequest', backref='service')
  
@@ -27,7 +26,7 @@ class ServiceRequest(db.Model):
     date_of_request = db.Column(db.DateTime, default=datetime.utcnow)
     preferred_date = db.Column(db.DateTime, nullable=False)
     date_of_completion = db.Column(db.DateTime)
-    status = db.Column(db.String(20), default='requested')  # requested, assigned, closed
+    status = db.Column(db.String(20), default='requested')  
     remarks = db.Column(db.Text)
     location = db.Column(db.String(100))
     pin_code = db.Column(db.String(10))
@@ -36,7 +35,6 @@ class ServiceRequest(db.Model):
     professional_location = db.Column(db.String(255))
     location_updates = db.relationship('LocationUpdate', backref='service_request')
     
-    # Relationship with reviews
     review = db.relationship('Review', backref='service_request', uselist=False)
 
 class RejectionReason(db.Model):
@@ -69,6 +67,6 @@ class LocationUpdate(db.Model):
     latitude = db.Column(db.Float)
     longitude = db.Column(db.Float)
     timestamp = db.Column(db.DateTime, default=datetime.utcnow)
-    update_type = db.Column(db.String(20))  # arrived, started, completed, exited
+    update_type = db.Column(db.String(20))  
 
     
